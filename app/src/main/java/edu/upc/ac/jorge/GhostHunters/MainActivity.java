@@ -1428,6 +1428,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     //Trying to apply kalmanfilter: using cardboard VR implementation from google
+
+    //Kalman-Filter from the google cardboard api.
+    //The Kalman filter is used by the HeadTracker class, which is used by the CardboardView class:
+    //https://github.com/raasun/cardboard/blob/master/src/com/google/vrtoolkit/cardboard/sensors/internal/OrientationEKF.java
     private final OrientationEKF mTracker = new OrientationEKF(); //movement tracker
     private final float[] mTmpRotatedEvent = new float[3];
     private long mLastGyroEventTimeNanos;
