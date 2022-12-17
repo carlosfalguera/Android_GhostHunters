@@ -1,5 +1,21 @@
+/*
+ * Copyright 2022 Jorge García Vidal, Carlos Falguera Villar, Martí Alonso García
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package edu.upc.ac.jorge.GhostHunters;
 
+import android.opengl.Matrix;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.Sensor.TYPE_MAGNETIC_FIELD;
 import static android.hardware.Sensor.TYPE_GYROSCOPE;
@@ -892,6 +908,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     //CHECK https://source.android.com/docs/core/interaction/sensors/sensor-types
     public void initAppSensors(){
+        //Init tracker that performs the KALMAN filter for gyro values
+        Kalman_startTracker();
+
         //get sensors
         if(sensorManager==null) {
             sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -1194,9 +1213,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             UpdateSteps(numstepsActuales);
         }
         // USE OF GYROSCOPE to control position
+        if(sType==TYPE_GYROSCOPE_UNCALIBRATED){
+            //Add data to the tracker performing the kalman filter
+            Kalman_processGyro(sensorEvent.values, sensorEvent.timestamp);
+        }
         if ((sType == Sensor.TYPE_GYROSCOPE && bFilterEnabledX) || (sType == TYPE_GYROSCOPE_UNCALIBRATED  && !bFilterEnabledX)) {
             float[] gyr = new float[3]; float[] v = new float[3]; double theta = 0d;
             copyarrayto(sensorEvent.values, gyr);
+
+
+
             double gyrRotationVelocity = rotatingvel(gyr, v); // obtain rotation velocity and axis
             //https://developer.android.com/reference/android/hardware/SensorEvent#values
             //SensorEvent.values[1]; ->
@@ -1269,6 +1295,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //    ...
         //    case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
         //    ...
+        if(sType == TYPE_ACCELEROMETER_UNCALIBRATED){
+            Kalman_processAcc(sensorEvent.values, sensorEvent.timestamp);
+        }
+
         if ((sType == Sensor.TYPE_ACCELEROMETER && bFilterEnabledY) || (sType == TYPE_ACCELEROMETER_UNCALIBRATED  && !bFilterEnabledY)) {
             //mGravity = sensorEvent.values.clone();
             //accelerometervalues = sensorEvent.values.clone();
@@ -1279,7 +1309,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             else{
                 alpha = 0.0f;
-                //add simulated drift to left or right
+                //Add simulated drift to left or right? No, no need to amplify the effect. :D
             }
             //COEFICIENTE DE FILTRO DEL ÚLTIMO INPUT PARA Y -> [0.8 T-1 + 0.2 T]
             //SE APLICA ESTE FILTRO SOBRE EL SENSOR YA CALIBRADO! AYUDA MUCHO!
@@ -1335,6 +1365,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             textViewGhostY.setText("" + -degreesGhostY + "º" );
             textViewGhostY.setTextColor(Color.MAGENTA);
             //
+
+            //Show Kalman filtered data of Gyroscope
+            ShowKalmanGyroFilteredData();
         }
 
         //ajustar posiciones de display de los fanstasmas si se ven ahora
@@ -1393,6 +1426,67 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if(v<0){return "";}
         else{return "+";}
     }
+
+    //Trying to apply kalmanfilter: using cardboard VR implementation from google
+    private final OrientationEKF mTracker = new OrientationEKF(); //movement tracker
+    private final float[] mTmpRotatedEvent = new float[3];
+    private long mLastGyroEventTimeNanos;
+
+    private final float[] mEkfToHeadTracker = new float[16];
+    public void Kalman_startTracker(){
+        mTracker.reset();
+        Matrix.setRotateEulerM(mEkfToHeadTracker, 0, -90.0F, 0.0F, 0.0F);
+        textViewGyroXKalman = (TextView) findViewById(R.id.textViewGyroXKalman);
+        textViewGyroYKalman = (TextView) findViewById(R.id.textViewGyroYKalman);
+        textViewGyroZKalman = (TextView) findViewById(R.id.textViewGyroZKalman);
+    }
+
+    public void Kalman_processGyro(float[] gyroValues, long sensorTimeStamp)
+    {
+        mLastGyroEventTimeNanos = System.nanoTime();
+        mTmpRotatedEvent[0] = (-gyroValues[1]);
+        mTmpRotatedEvent[1] = gyroValues[0];
+        mTmpRotatedEvent[2] = gyroValues[2];
+        mTracker.processGyro(mTmpRotatedEvent, sensorTimeStamp);
+    }
+
+    public void Kalman_processAcc(float[] accValues, long sensorTimeStamp)
+    {
+        long timeNanos = System.nanoTime();
+        mTmpRotatedEvent[0] = (-accValues[1]);
+        mTmpRotatedEvent[1] = accValues[0];
+        mTmpRotatedEvent[2] = accValues[2];
+        mTracker.processAcc(mTmpRotatedEvent, sensorTimeStamp);
+    }
+
+    //private final float[] mTmpHeadView = new float[16];
+    private Vector3d KalmanFilteredGyroData = new Vector3d(0,0,0);
+    TextView textViewGyroXKalman =null;
+    TextView textViewGyroYKalman =null;
+    TextView textViewGyroZKalman =null;
+    public void ShowKalmanGyroFilteredData(){
+
+        KalmanFilteredGyroData = mTracker.getFilteredGyroData();
+        String x = format("%.2f", (KalmanFilteredGyroData.x/1f));
+        String y = format("%.2f", (KalmanFilteredGyroData.y/1f));
+        String z = format("%.2f", (KalmanFilteredGyroData.z/1f));
+        textViewGyroXKalman.setText("º: " + x);//
+        textViewGyroYKalman.setText("º: " + y);//
+        textViewGyroZKalman.setText("º: " + z);//
+
+        /*
+        float[] headView;
+        int offset = 0;
+        double secondsSinceLastGyroEvent = (System.nanoTime() - mLastGyroEventTimeNanos) * 1.E-09D;
+        double secondsToPredictForward = secondsSinceLastGyroEvent + 0.03333333333333333D;
+        double[] mat = mTracker.getPredictedGLMatrix(secondsToPredictForward);
+        for (int i = 0; i < headView.length; i++) {
+            mTmpHeadView[i] = ((float)mat[i]);
+        }
+        Matrix.multiplyMM(headView, offset, mTmpHeadView, 0, mEkfToHeadTracker, 0);
+        */
+    }
+
 }
 
 
