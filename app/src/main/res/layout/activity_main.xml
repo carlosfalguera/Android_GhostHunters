@@ -73,18 +73,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/textViewGyroXD"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="8dp"
-        android:text="º: 0.0"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        app:layout_constraintBottom_toTopOf="@+id/textViewGyroYD"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <pl.droidsonroids.gif.GifImageView
         android:id="@+id/hitcircle"
         android:layout_width="200dp"
@@ -188,6 +176,17 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintStart_toStartOf="@+id/textViewGyroY"
         app:layout_constraintTop_toTopOf="@+id/textViewAccelZ" />
+
+    <TextView
+        android:id="@+id/textViewGyroXD"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="º: 0.0"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintBottom_toTopOf="@+id/textViewGyroYD"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/textViewInfo"
@@ -299,7 +298,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
         android:layout_marginBottom="8dp"
         android:text="º: 0.0"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
@@ -310,13 +308,11 @@
         android:id="@+id/btFilterOnOffY"
         android:layout_width="65dp"
         android:layout_height="36dp"
-        android:layout_marginTop="5dp"
         android:onClick="switchFilterOnOffY"
-        android:text="F.  ON"
+        android:text="F.Y.  ON"
         android:textSize="10sp"
-        app:layout_constraintEnd_toStartOf="@+id/textView5"
-        app:layout_constraintStart_toStartOf="@+id/btFilterOnOffX"
-        app:layout_constraintTop_toBottomOf="@+id/btFilterOnOffX" />
+        app:layout_constraintBottom_toTopOf="@+id/textViewGyroXD"
+        app:layout_constraintEnd_toEndOf="@+id/textViewGyroYD" />
 
     <TextView
         android:id="@+id/textViewPitch"
@@ -466,13 +462,13 @@
 
     <Button
         android:id="@+id/btFilterOnOffX"
-        android:layout_width="62dp"
+        android:layout_width="65dp"
         android:layout_height="36dp"
         android:onClick="switchFilterOnOffX"
-        android:text="F.  ON"
+        android:text="F.X.  ON"
         android:textSize="10sp"
-        app:layout_constraintBottom_toBottomOf="@+id/textView5"
-        app:layout_constraintEnd_toStartOf="@+id/textView5" />
+        app:layout_constraintEnd_toStartOf="@+id/btFilterOnOffY"
+        app:layout_constraintTop_toTopOf="@+id/btFilterOnOffY" />
 
     <Button
         android:id="@+id/btStartGameFull"

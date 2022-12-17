@@ -323,18 +323,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void switchFilterOnOffX(View view) {
         bFilterEnabledX = ! bFilterEnabledX;
         if(bFilterEnabledX){
-            btFilterOnOffX.setText("F. ON");
+            btFilterOnOffX.setText("F.X. ON");
         }else{
-            btFilterOnOffX.setText("F. OFF");
+            btFilterOnOffX.setText("F.X. OFF");
         }
     }
 
     public void switchFilterOnOffY(View view) {
         bFilterEnabledY = ! bFilterEnabledY;
         if(bFilterEnabledY){
-            btFilterOnOffY.setText("F. ON");
+            btFilterOnOffY.setText("F.Y. ON");
         }else{
-            btFilterOnOffY.setText("F. OFF");
+            btFilterOnOffY.setText("F.Y. OFF");
         }
     }
 
