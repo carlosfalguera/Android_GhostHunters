@@ -757,6 +757,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         B3.setVisibility(View.VISIBLE);
         btStartGameFull.setVisibility(View.VISIBLE);
         btStartGameDrift.setVisibility(View.VISIBLE);
+        Button btGoBack = (Button) findViewById(R.id.btGoBack);
+        btGoBack.setVisibility(View.INVISIBLE);
 
         myImageHit.setVisibility(View.INVISIBLE);
         tvGameOver.setVisibility(View.INVISIBLE);
@@ -1096,6 +1098,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         B2.setVisibility(View.INVISIBLE);
         Button B3 = (Button) findViewById(R.id.button3);
         B3.setVisibility(View.INVISIBLE);
+
+        Button btGoBack = (Button) findViewById(R.id.btGoBack);
+        btGoBack.setVisibility(View.VISIBLE);
 
         myImageHit.setVisibility(View.INVISIBLE);
         tvGameOver.setVisibility(View.INVISIBLE);
