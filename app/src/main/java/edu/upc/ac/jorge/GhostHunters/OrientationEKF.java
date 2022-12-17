@@ -1,5 +1,7 @@
 package edu.upc.ac.jorge.GhostHunters;
 
+//IMPLEMENTATION FROM GOOGLE CARDBOARD VR HEAD TRACKER
+//https://github.com/raasun/cardboard/tree/f7b4cdce75bec1fab2131834734947d98734459c/src/com/google/vrtoolkit/cardboard
 public class OrientationEKF
 {
     private static final float NS2S = 1.0E-09F;
