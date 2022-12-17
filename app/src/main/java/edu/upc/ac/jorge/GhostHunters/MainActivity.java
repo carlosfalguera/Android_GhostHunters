@@ -131,7 +131,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             seconds = seconds % 60;
             GameLoopTask(minutes, seconds);
             //run this task once every second
-            timerHandler.postDelayed(this, 1000);
+            if(GameOn) {
+                timerHandler.postDelayed(this, 1000);
+            }
         }
     };
     private boolean lastkilltimeok = true;
@@ -158,7 +160,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     //NEW VARS FOR PDS PRESENTATION - 17.12.2022
-
     boolean bFilterEnabledX = true;
     boolean bFilterEnabledY = true;
     Button btFilterOnOffX = null;
@@ -166,7 +167,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     boolean bDriftGame = false;
     Button btStartGameFull;
     Button btStartGameDrift;
+    Button btGoBack;
     //float[] mFilerNoise = new float[3];
+
 
     //WARNING! No son realmente ImageView.. son GifImageView!! de pl.droidxxxx
     ImageView hitimageview = null;
@@ -206,6 +209,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onCreate(Bundle savedInstanceState) {
         //ask for permisions using RxPermissions
+
+        checkgrantsjusttoshowdialoguestouser();
         //RxPermissions(this).request(Manifest.permission.ACTIVITY_RECOGNITION)
         //        .subscribe { isGranted ->
         //        Log.d("TAG", "Is ACTIVITY_RECOGNITION permission granted: $isGranted")
@@ -249,6 +254,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             btFilterOnOffY = (Button) findViewById(R.id.btFilterOnOffY);
             btStartGameFull = (Button) findViewById(R.id.btStartGameFull);
             btStartGameDrift = (Button) findViewById(R.id.btStartGameDrift);
+            btGoBack = (Button) findViewById(R.id.btGoBack);
         }
 
         //camera init and show
@@ -333,9 +339,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    public void checkgrantsjusttoshowdialoguestouser(){
+        //check permissions to show user the grants dialogues if not allowed
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION);
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+    }
+
     public void checkforpermisions(View view) {
         //check for permisions
         int MyRequestCode = 456; //Application specific request code to match with a result reported to onRequestPermissionsResult. Should be >= 0.
+        //check permissions before final checks to show user the grants dialogues
+        checkgrantsjusttoshowdialoguestouser();
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
             displayToast(10, 20, "Activity recognition granted OK", 2500);
         } else {
@@ -720,6 +736,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return true;
         }
         return false;
+    }
+
+    private void StopGame(){
+        GameOn = false;
+        /* scoreval = 0;
+        ghosts = 0;
+        life = 100;
+        steps = 0;
+        numstepsActuales = 0;*/
+        UpdateScore();
+        UpdateGhosts();
+        UpdateLife();
+        UpdateSteps(0);
+        //if(startbutton == null){startbutton = (Button) findViewById(R.id.button);}
+        //startbutton.setVisibility(View.VISIBLE);// . setText("Restart");
+        Button B2 = (Button) findViewById(R.id.button2);
+        B2.setVisibility(View.VISIBLE);
+        Button B3 = (Button) findViewById(R.id.button3);
+        B3.setVisibility(View.VISIBLE);
+        btStartGameFull.setVisibility(View.VISIBLE);
+        btStartGameDrift.setVisibility(View.VISIBLE);
+
+        myImageHit.setVisibility(View.INVISIBLE);
+        tvGameOver.setVisibility(View.INVISIBLE);
+        tvGameOver.setText("GAME OVER");
+        //GameOn = true;
+        //launch timer handler
+        //startTime = System.currentTimeMillis();
+        //timerHandler.postDelayed(timerRunnable, 0);
+
     }
 
     private boolean checkCameraTouch(View v, MotionEvent event) {
@@ -1243,9 +1289,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             linear_acceleration[0] = sensorEvent.values[0] - mGravity[0];
             linear_acceleration[1] = sensorEvent.values[1] - mGravity[1];
             linear_acceleration[2] = sensorEvent.values[2] - mGravity[2];
-            textViewAccelX.setText(format("%.2f", linear_acceleration[0]));
-            textViewAccelY.setText(format("%.2f", linear_acceleration[1]));
-            textViewAccelZ.setText(format("%.2f", linear_acceleration[2]));
+            //show raw data always in the textviews
+            textViewAccelX.setText(format("%.2f", sensorEvent.values[0]));//linear_acceleration[0]));
+            textViewAccelY.setText(format("%.2f", sensorEvent.values[1]));//linear_acceleration[1]));
+            textViewAccelZ.setText(format("%.2f", sensorEvent.values[2]));//linear_acceleration[2]));
         }
         else if(sType == Sensor.TYPE_MAGNETIC_FIELD){
             mGeomagnetic = sensorEvent.values.clone();
