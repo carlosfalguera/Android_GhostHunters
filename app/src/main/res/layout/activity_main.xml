@@ -202,20 +202,6 @@
         app:layout_constraintStart_toEndOf="@+id/textViewScore" />
 
 
-    <TextView
-        android:id="@+id/textViewGameOver"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="StartCameraAndResetGame"
-        android:text="PRESS START"
-        android:textColor="@color/black"
-        android:textSize="60sp"
-        android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageViewLogoGH" />
-
-
     <Button
         android:id="@+id/button"
         android:layout_width="wrap_content"
@@ -319,6 +305,18 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintBottom_toTopOf="@+id/textViewSteps"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/btFilterOnOffY"
+        android:layout_width="65dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="5dp"
+        android:onClick="switchFilterOnOffY"
+        android:text="F.  ON"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toStartOf="@+id/textView5"
+        app:layout_constraintStart_toStartOf="@+id/btFilterOnOffX"
+        app:layout_constraintTop_toBottomOf="@+id/btFilterOnOffX" />
 
     <TextView
         android:id="@+id/textViewPitch"
@@ -467,13 +465,44 @@
         app:layout_constraintTop_toTopOf="@+id/textViewGyroXD" />
 
     <Button
-        android:id="@+id/btFilterOnOff"
-        android:layout_width="80dp"
-        android:layout_height="37dp"
-        android:onClick="switchFilterOnOff"
-        android:text="Filter ON"
+        android:id="@+id/btFilterOnOffX"
+        android:layout_width="62dp"
+        android:layout_height="36dp"
+        android:onClick="switchFilterOnOffX"
+        android:text="F.  ON"
         android:textSize="10sp"
-        app:layout_constraintBottom_toTopOf="@+id/textViewGyroXD"
-        app:layout_constraintEnd_toEndOf="@+id/textViewGyroXD" />
+        app:layout_constraintBottom_toBottomOf="@+id/textView5"
+        app:layout_constraintEnd_toStartOf="@+id/textView5" />
+
+    <Button
+        android:id="@+id/btStartGameFull"
+        android:layout_width="162dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="5dp"
+        android:onClick="StartCameraAndResetGameFull"
+        android:text="START FULL GAME"
+        app:layout_constraintStart_toStartOf="@+id/imageViewLogoGH"
+        app:layout_constraintTop_toBottomOf="@+id/imageViewLogoGH" />
+
+    <Button
+        android:id="@+id/btStartGameDrift"
+        android:layout_width="112dp"
+        android:layout_height="60dp"
+        android:onClick="StartCameraAndResetGameDrift"
+        android:text="drift test"
+        app:layout_constraintEnd_toEndOf="@+id/imageViewLogoGH"
+        app:layout_constraintTop_toTopOf="@+id/btStartGameFull" />
+
+    <TextView
+        android:id="@+id/textViewGameOver"
+        android:layout_width="355dp"
+        android:layout_height="66dp"
+        android:layout_marginTop="28dp"
+        android:text="..."
+        android:textSize="48sp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageViewLogoGH" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

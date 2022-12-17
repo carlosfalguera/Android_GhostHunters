@@ -94,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     int ghostdegreeX[] =  new int[5];
     //vars to use in sensors to get orientation - azimut, pitch and roll of phone
     float[] mGravity = new float[3];
+
     float[] mGeomagnetic = new float[3];
     float azimut = 0.f; float pitch = 0.f; float roll = 0.f;
     //coords in WORLD, around and above, distance is ignored.
@@ -148,8 +149,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView textViewAccelY = null;
     TextView textViewAccelZ = null;
     TextView textViewInfo = null;
-    Button btFilterOnOff = null;
-    boolean bFilterEnabled = true;
+
+
+    //NEW VARS FOR PDS PRESENTATION - 17.12.2022
+
+    boolean bFilterEnabledX = true;
+    boolean bFilterEnabledY = true;
+    Button btFilterOnOffX = null;
+    Button btFilterOnOffY = null;
+    boolean bDriftGame = false;
+    Button btStartGameFull;
+    Button btStartGameDrift;
+    float[] mFilerNoise = new float[3];
+
     //WARNING! No son realmente ImageView.. son GifImageView!! de pl.droidxxxx
     ImageView hitimageview = null;
     ImageView Ghost1 = null;
@@ -227,7 +239,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             textViewAccelY = (TextView) findViewById(R.id.textViewAccelY);
             textViewAccelZ = (TextView) findViewById(R.id.textViewAccelZ);
             textViewInfo =(TextView) findViewById(R.id.textViewInfo);
-            btFilterOnOff = (Button) findViewById(R.id.btFilterOnOff);
+            btFilterOnOffX = (Button) findViewById(R.id.btFilterOnOffX);
+            btFilterOnOffY = (Button) findViewById(R.id.btFilterOnOffY);
+            btStartGameFull = (Button) findViewById(R.id.btStartGameFull);
+            btStartGameDrift = (Button) findViewById(R.id.btStartGameDrift);
         }
 
         //camera init and show
@@ -294,12 +309,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    public void switchFilterOnOff(View view) {
-        bFilterEnabled = ! bFilterEnabled;
-        if(bFilterEnabled){
-            btFilterOnOff.setText("Filter ON");
+    public void switchFilterOnOffX(View view) {
+        bFilterEnabledX = ! bFilterEnabledX;
+        if(bFilterEnabledX){
+            btFilterOnOffX.setText("F. ON");
         }else{
-            btFilterOnOff.setText("Filter OFF");
+            btFilterOnOffX.setText("F. OFF");
+        }
+    }
+
+    public void switchFilterOnOffY(View view) {
+        bFilterEnabledY = ! bFilterEnabledY;
+        if(bFilterEnabledY){
+            btFilterOnOffY.setText("F. ON");
+        }else{
+            btFilterOnOffY.setText("F. OFF");
         }
     }
 
@@ -353,7 +377,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //Update? - YES -> Ghost appearing & life reduction
             int timeuntilnextghost = seconds % 5;
             tvgssensing.setText("Sensing ... " + (4 - timeuntilnextghost));
-            if (timeuntilnextghost == 0) { //1 fantasma cada 5 segundos
+
+            if(bDriftGame){
+                //show fixed ghost at zero position
+                int numgaux=1;
+                ghosts = numgaux;
+                rotxGhosts[numgaux] = 50;//randomdegx; //0 a 360
+                rotyGhosts[numgaux] = 10; //randomdegy; //0 a 80
+                //simulate distance by display size
+                sizeGhosts[numgaux] = 375; //rndsize; //300 a 450
+                //CalculateCoords
+                RecalculateGhostDisplayCoordsFromPhoneOrientation();
+            }
+            else if (timeuntilnextghost == 0) { //1 fantasma cada 5 segundos
                 if (ghosts < 4) {
                     ghosts += 1;
                     setnewpositionforghost(ghosts);
@@ -891,12 +927,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         startActivity(intent);
     }
 
+    public void StartCameraAndResetGameFull(View view) {
+        StartCameraAndResetGame(view, 0);
+    }
+    public void StartCameraAndResetGameDrift(View view) {
+        StartCameraAndResetGame(view, 1);
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void StartCameraAndResetGame(View view) {
+    public void StartCameraAndResetGame(View view, int DriftOnly) {
         //show camera and start the game
         SurfaceTexture mySurfaceTexture = myTextureView.getSurfaceTexture();
         Surface mySurface = new Surface(mySurfaceTexture);
+
+        btStartGameFull.setVisibility(View.INVISIBLE);
+        btStartGameDrift.setVisibility(View.INVISIBLE);
+
+        if(DriftOnly == 1){
+            bDriftGame = true;
+        }else{
+            bDriftGame = false;
+        }
 
         try {
             myCaptureRequestBuilder = myCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -1088,6 +1139,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             float[] gyr = new float[3]; float[] v = new float[3]; double theta = 0d;
             copyarrayto(sensorEvent.values, gyr);
+
+
             double gyrRotationVelocity = rotatingvel(gyr, v); // obtain rotation velocity and axis
             //https://developer.android.com/reference/android/hardware/SensorEvent#values
             //SensorEvent.values[1]; ->
@@ -1101,6 +1154,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Xini.update(Xini.rotate((float) -theta, v));
             Yini.update(Yini.rotate((float) -theta, v));
             Zini.update(Zini.rotate((float) -theta, v));
+
+
+            if(bFilterEnabledX){
+
+            }
+            else{
+                double vDriftMeanNoise = 0.001;
+                //add simulated drift to left or right
+                //Xini.x += vNoise;
+                //Xini.y += vNoise;
+                Xini.z += vDriftMeanNoise;
+            }
+
+
             //We Just need to use the YAxis info to rotate ghosts
             //show value for debug and validation
             //TextView tAxisY = (TextView) findViewById(R.id.textViewYAxisDeg);
@@ -1149,18 +1216,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //accelerometervalues = sensorEvent.values.clone();
                 //AX.setText(accelerometervalues[0] + "");//AY.setText(accelerometervalues[1] + "");//AZ.setText(accelerometervalues[2] + "");
                 float alpha = 0.8f;
-                // filtrar gravedad para hacer el ajuste mas suave (low-pass filter t / (t + dT))
 
-                if(bFilterEnabled){ alpha = 0.8f; }
-                else{ alpha = 0.0f; }
+                if(bFilterEnabledY){
+                    alpha = 0.8f;
+                    mFilerNoise[0] = 0.0f;
+                    mFilerNoise[1] = 0.0f;
+                    mFilerNoise[2] = 0.0f;
+                }
+                else{
+                    alpha = 0.0f;
+                    //add simulated drift to left or right
+                    mFilerNoise[0] = 0.1f;
+                    mFilerNoise[1] = 0.1f;
+                    mFilerNoise[2] = 0.1f;
+                }
 
+                // filtrar para hacer el ajuste Y mas suave (low-pass filter t / (t + dT))
                 mGravity[0] = alpha * mGravity[0] + (1 - alpha) * sensorEvent.values[0];
                 mGravity[1] = alpha * mGravity[1] + (1 - alpha) * sensorEvent.values[1];
                 mGravity[2] = alpha * mGravity[2] + (1 - alpha) * sensorEvent.values[2];
                 // Recalcular acc eliminando la gravedad (hfilter)
-                linear_acceleration[0] = sensorEvent.values[0] - mGravity[0];
-                linear_acceleration[1] = sensorEvent.values[1] - mGravity[1];
-                linear_acceleration[2] = sensorEvent.values[2] - mGravity[2];
+                linear_acceleration[0] = mFilerNoise[0] + sensorEvent.values[0] - mGravity[0];
+                linear_acceleration[1] = mFilerNoise[1] + sensorEvent.values[1] - mGravity[1];
+                linear_acceleration[2] = mFilerNoise[2] + sensorEvent.values[2] - mGravity[2];
                 textViewAccelX.setText(format("%.2f", linear_acceleration[0]));
                 textViewAccelY.setText(format("%.2f", linear_acceleration[1]));
                 textViewAccelZ.setText(format("%.2f", linear_acceleration[2]));
