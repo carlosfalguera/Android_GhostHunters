@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">IMSensorLab</string>
+    <string name="buttonNoFilter">OK</string>
+    <string name="buttonFilter">OK</string>
+    <string name="buttonRelNoG">OK</string>
+    <string name="textNoFilter">Abs, AM, NO filter</string>
+    <string name="textFilter">Abs, AM, filter</string>
+    <string name="textRelNoG">Rel, G </string>
+</resources>
