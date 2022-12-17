@@ -170,7 +170,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Button btGoBack;
     //float[] mFilerNoise = new float[3];
 
-
     //WARNING! No son realmente ImageView.. son GifImageView!! de pl.droidxxxx
     ImageView hitimageview = null;
     ImageView Ghost1 = null;
@@ -738,7 +737,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return false;
     }
 
-    private void StopGame(){
+    public void StopGame(View view){
         GameOn = false;
         /* scoreval = 0;
         ghosts = 0;
@@ -757,7 +756,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         B3.setVisibility(View.VISIBLE);
         btStartGameFull.setVisibility(View.VISIBLE);
         btStartGameDrift.setVisibility(View.VISIBLE);
-        Button btGoBack = (Button) findViewById(R.id.btGoBack);
+
         btGoBack.setVisibility(View.INVISIBLE);
 
         myImageHit.setVisibility(View.INVISIBLE);
@@ -1099,7 +1098,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Button B3 = (Button) findViewById(R.id.button3);
         B3.setVisibility(View.INVISIBLE);
 
-        Button btGoBack = (Button) findViewById(R.id.btGoBack);
         btGoBack.setVisibility(View.VISIBLE);
 
         myImageHit.setVisibility(View.INVISIBLE);

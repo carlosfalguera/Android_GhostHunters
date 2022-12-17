@@ -511,8 +511,9 @@
         android:layout_height="wrap_content"
         android:onClick="StopGame"
         android:text="Stop Game"
-        android:visibility="invisible"
-        tools:layout_editor_absoluteX="307dp"
-        tools:layout_editor_absoluteY="0dp" />
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textViewGhostSense"
+        app:layout_constraintTop_toTopOf="@+id/textViewYAxisDeg" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
