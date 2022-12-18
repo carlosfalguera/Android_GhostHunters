@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "edu.upc.ac.jorge.IMSensorLab"
+        applicationId "edu.upc.ac.jorge.GhostHunters"
         minSdkVersion 17
         targetSdkVersion 30
         versionCode 1
@@ -26,6 +26,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    namespace 'edu.upc.ac.jorge.GhostHunters'
 }
 
 dependencies {
