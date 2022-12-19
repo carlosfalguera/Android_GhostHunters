@@ -332,7 +332,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         SCREEN_width = displayMetrics.widthPixels;
 
         //init step counter sensor & others (gyro, etc...)
-        initAppSensors();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            initAppSensors();
+        }else{
+            displayToast(10, 20, "Sorry. SDK version not supported :(", 2500);
+        }
 
     }
 
@@ -907,10 +911,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     //CHECK https://source.android.com/docs/core/interaction/sensors/sensor-types
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void initAppSensors(){
         //Init tracker that performs the KALMAN filter for gyro values
         Kalman_startTracker();
-
         //get sensors
         if(sensorManager==null) {
             sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -918,33 +922,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (sensorManager != null) {
             accelerometerSensor = sensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
             accelerometerSensorUncalibrated = sensorManager.getDefaultSensor(TYPE_ACCELEROMETER_UNCALIBRATED);
-        }
-        if(accelerometerSensor!=null){
-            sensorManager.registerListener((SensorEventListener) this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
-            sensorManager.registerListener((SensorEventListener) this, accelerometerSensorUncalibrated, SensorManager.SENSOR_DELAY_GAME);
-        }else{
-            displayToast(10, 50, "Accelerometer sensor not available!", 3000);
-        }
-        if (sensorManager != null) {
             gyroscopeSensor = sensorManager.getDefaultSensor(TYPE_GYROSCOPE);
             gyroscopeSensorUncalibrated = sensorManager.getDefaultSensor(TYPE_GYROSCOPE_UNCALIBRATED);
-        }
-        if(gyroscopeSensor!=null){
-            sensorManager.registerListener((SensorEventListener) this, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
-            sensorManager.registerListener((SensorEventListener) this, gyroscopeSensorUncalibrated, SensorManager.SENSOR_DELAY_GAME);
-        }else{
-            displayToast(10, 50, "Gyroscope sensor not available!", 3000);
-        }
-
-        if (sensorManager != null) {
             magneticfieldSensor = sensorManager.getDefaultSensor(TYPE_MAGNETIC_FIELD);
+            stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
         }
-        if(magneticfieldSensor!=null){
-            sensorManager.registerListener((SensorEventListener) this, magneticfieldSensor, SensorManager.SENSOR_DELAY_GAME);
-        }else{
-            displayToast(10, 50, "Magneticfield sensor not available!", 3000);
+        if (sensorManager != null) {
+            if (accelerometerSensor != null) {
+                sensorManager.registerListener((SensorEventListener) this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
+                sensorManager.registerListener((SensorEventListener) this, accelerometerSensorUncalibrated, SensorManager.SENSOR_DELAY_GAME);
+            } else {
+                displayToast(10, 50, "Accelerometer sensor not available!", 3000);
+            }
+            if (gyroscopeSensor != null) {
+                sensorManager.registerListener((SensorEventListener) this, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
+                sensorManager.registerListener((SensorEventListener) this, gyroscopeSensorUncalibrated, SensorManager.SENSOR_DELAY_GAME);
+            } else {
+                displayToast(10, 50, "Gyroscope sensor not available!", 3000);
+            }
+            if (magneticfieldSensor != null) {
+                sensorManager.registerListener((SensorEventListener) this, magneticfieldSensor, SensorManager.SENSOR_DELAY_GAME);
+            } else {
+                displayToast(10, 50, "Magneticfield sensor not available!", 3000);
+            }
+            if(stepDetectorSensor!=null){
+                sensorManager.registerListener(this, stepDetectorSensor, SensorManager.SENSOR_DELAY_GAME);
+            }else{
+                displayToast(10, 50, "StepDetect sensor not available!", 3000);
+            }
         }
-
         /*if(stepCounterSensor==null) {
             stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         }
@@ -954,14 +960,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             displayToast(10, 50, "StepCount sensor not available!", 3000);
         }*/
 
-        if(stepDetectorSensor==null) {
-            stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-        }
-        if(stepDetectorSensor!=null){
-            sensorManager.registerListener(this, stepDetectorSensor, SensorManager.SENSOR_DELAY_GAME);
-        }else{
-            displayToast(10, 50, "StepDetect sensor not available!", 3000);
-        }
 
         //SENSOR_DELAY_FASTEST: 0us, SENSOR_DELAY_UI: 1us, SENSOR_DELAY_GAME: 2us, SENSOR_DELAY_NORMAL: 3us
         //Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
@@ -1212,17 +1210,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             numstepsActuales+=1;
             UpdateSteps(numstepsActuales);
         }
-        // USE OF GYROSCOPE to control position
+
+        //update values in tracker to perform the kalman filter
         if(sType==TYPE_GYROSCOPE_UNCALIBRATED){
             //Add data to the tracker performing the kalman filter
             Kalman_processGyro(sensorEvent.values, sensorEvent.timestamp);
         }
+        else if(sType == TYPE_ACCELEROMETER_UNCALIBRATED){
+            Kalman_processAcc(sensorEvent.values, sensorEvent.timestamp);
+
+        }
+
+        // USE OF GYROSCOPE to control position
         if ((sType == Sensor.TYPE_GYROSCOPE && bFilterEnabledX) || (sType == TYPE_GYROSCOPE_UNCALIBRATED  && !bFilterEnabledX)) {
+        //if ((sType == TYPE_GYROSCOPE_UNCALIBRATED)) {
             float[] gyr = new float[3]; float[] v = new float[3]; double theta = 0d;
             copyarrayto(sensorEvent.values, gyr);
 
-
-
+            if(bFilterEnabledX){
+                //gyr[0] = (float)KalmanFilteredGyroData.x;
+                //gyr[1] = (float)KalmanFilteredGyroData.y;
+                //gyr[2] = (float)KalmanFilteredGyroData.z;
+            }
             double gyrRotationVelocity = rotatingvel(gyr, v); // obtain rotation velocity and axis
             //https://developer.android.com/reference/android/hardware/SensorEvent#values
             //SensorEvent.values[1]; ->
@@ -1264,9 +1273,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //Game is meant played with movile phone in vertical position
             // we will use Xini coords to recalculate ghosts position around player
             // and  above/under player
-            String x = format("%.2f", (Xini.x/1f));
-            String y = format("%.2f", (Xini.y/1f));
-            String z = format("%.2f", (Xini.z/1f));
+            String x = format("%.2f", (gyr[0]/1f)); //(Xini.x/1f));
+            String y = format("%.2f", (gyr[1]/1f));
+            String z = format("%.2f", (gyr[2]/1f));
             textViewGyroX.setText("º: " + x);//
             textViewGyroY.setText("º: " + y);//
             textViewGyroZ.setText("º: " + z);//
@@ -1295,37 +1304,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //    ...
         //    case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
         //    ...
-        if(sType == TYPE_ACCELEROMETER_UNCALIBRATED){
-            Kalman_processAcc(sensorEvent.values, sensorEvent.timestamp);
-        }
 
-        if ((sType == Sensor.TYPE_ACCELEROMETER && bFilterEnabledY) || (sType == TYPE_ACCELEROMETER_UNCALIBRATED  && !bFilterEnabledY)) {
-            //mGravity = sensorEvent.values.clone();
-            //accelerometervalues = sensorEvent.values.clone();
-            //AX.setText(accelerometervalues[0] + "");//AY.setText(accelerometervalues[1] + "");//AZ.setText(accelerometervalues[2] + "");
-            float alpha = 0.8f;
-            if(bFilterEnabledY){
-                alpha = 0.8f;
-            }
-            else{
-                alpha = 0.0f;
-                //Add simulated drift to left or right? No, no need to amplify the effect. :D
-            }
-            //COEFICIENTE DE FILTRO DEL ÚLTIMO INPUT PARA Y -> [0.8 T-1 + 0.2 T]
-            //SE APLICA ESTE FILTRO SOBRE EL SENSOR YA CALIBRADO! AYUDA MUCHO!
-            //EXPLICAR BIEN ESTE NUEVO FILTRO PASA BAJOS ADICIONAL AÑADIDO AL ACELERÓMETRO
-            // filtrar para hacer el ajuste Y mas suave (low-pass filter t / (t + dT))
+
+        //if ( (sType == Sensor.TYPE_ACCELEROMETER && bFilterEnabledY) || (sType == TYPE_ACCELEROMETER_UNCALIBRATED  && !bFilterEnabledY)) {
+        if (sType == TYPE_ACCELEROMETER_UNCALIBRATED) {
+            float alpha = 0.9f;
+            if (!bFilterEnabledY) alpha = 0.0f;
+            //Low-pass filter with t / (t + dT) //With default [0.8 T-1 + 0.2 T]
+            //t is the low-pass filter's time-constant and dT is the event delivery rate
             mGravity[0] = alpha * mGravity[0] + (1 - alpha) * sensorEvent.values[0];
             mGravity[1] = alpha * mGravity[1] + (1 - alpha) * sensorEvent.values[1];
             mGravity[2] = alpha * mGravity[2] + (1 - alpha) * sensorEvent.values[2];
+            //show data in the textviews
+            textViewAccelX.setText(format("%.2f", mGravity[0]));//sensorEvent.values[0]));
+            textViewAccelY.setText(format("%.2f", mGravity[1]));//sensorEvent.values[1]));
+            textViewAccelZ.setText(format("%.2f", mGravity[2]));//sensorEvent.values[2]));
             // Recalcular acc eliminando la gravedad (hfilter)
             linear_acceleration[0] = sensorEvent.values[0] - mGravity[0];
             linear_acceleration[1] = sensorEvent.values[1] - mGravity[1];
             linear_acceleration[2] = sensorEvent.values[2] - mGravity[2];
-            //show raw data always in the textviews
-            textViewAccelX.setText(format("%.2f", sensorEvent.values[0]));//linear_acceleration[0]));
-            textViewAccelY.setText(format("%.2f", sensorEvent.values[1]));//linear_acceleration[1]));
-            textViewAccelZ.setText(format("%.2f", sensorEvent.values[2]));//linear_acceleration[2]));
         }
         else if(sType == Sensor.TYPE_MAGNETIC_FIELD){
             mGeomagnetic = sensorEvent.values.clone();
@@ -1490,6 +1487,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Matrix.multiplyMM(headView, offset, mTmpHeadView, 0, mEkfToHeadTracker, 0);
         */
     }
+
+
 
 }
 
