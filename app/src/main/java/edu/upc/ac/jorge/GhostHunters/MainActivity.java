@@ -30,6 +30,8 @@
  * Just made this in a couple days to test some sensors
  * characteristics and check some filters behaviour,
  * just for research purpose and self-study.
+ *
+ * Contact information: carlesfalgueravillar@gmail.com
  */
 
 package edu.upc.ac.jorge.GhostHunters;
