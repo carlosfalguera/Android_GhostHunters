@@ -195,16 +195,12 @@ public class OrientationEKF
             else {
                 filterGyroTimestep(dT);
             }
-
             mu.set(gyro[0] * -dT, gyro[1] * -dT, gyro[2] * -dT);
             So3Util.sO3FromMu(mu, so3LastMotion);
-
             processGyroTempM1.set(so3SensorFromWorld);
             Matrix3x3d.mult(so3LastMotion, so3SensorFromWorld, processGyroTempM1);
             so3SensorFromWorld.set(processGyroTempM1);
-
             updateCovariancesAfterMotion();
-
             processGyroTempM2.set(mQ);
             processGyroTempM2.scale(dT * dT);
             mP.plusEquals(processGyroTempM2);

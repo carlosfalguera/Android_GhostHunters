@@ -1,16 +1,35 @@
 /*
- * Copyright 2022 Jorge García Vidal, Carlos Falguera Villar, Martí Alonso García
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Copyright 2022 Carlos Falguera Villar, Martí Alonso García
+ * Licensed under the GNU General Public License, Version 3.0 (the "License");
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ * You may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     <https://www.gnu.org/licenses/gpl-3.0.html>
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/* Acknowledgments:
+ * This software is a result of a initial gamification on April 2022 of a lab project from IM subject, taught by Jorge García Vidal.
+ * https://www.fib.upc.edu/en/studies/bachelors-degrees/bachelor-degree-informatics-engineering/curriculum/syllabus/IM
+ * A new modification was made on December 2022 to add and test filters to understand PDS processes, from PDS subject taught by Antoni Grau Saldes.
+ * https://www.fib.upc.edu/en/studies/bachelors-degrees/bachelor-degree-informatics-engineering/curriculum/syllabus/PDS
+ *
+ * Disclaimer: Sorry about the messy code and no activity handling.
+ * Just made this in a couple days to test some sensors
+ * characteristics and check some filters behaviour,
+ * just for research purpose and self-study.
  */
 
 package edu.upc.ac.jorge.GhostHunters;
@@ -173,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView textViewAccelY = null;
     TextView textViewAccelZ = null;
     TextView textViewInfo = null;
-
+    TextView textViewGPS = null;
 
     //NEW VARS FOR PDS PRESENTATION - 17.12.2022
     boolean bFilterEnabledX = true;
@@ -184,6 +203,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Button btStartGameFull;
     Button btStartGameDrift;
     Button btGoBack;
+    int counterforminmax = 0;
+    float yvalmin = 0f;
+    float yvalmax = 0f;
+
     //float[] mFilerNoise = new float[3];
 
     //WARNING! No son realmente ImageView.. son GifImageView!! de pl.droidxxxx
@@ -265,6 +288,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             textViewAccelY = (TextView) findViewById(R.id.textViewAccelY);
             textViewAccelZ = (TextView) findViewById(R.id.textViewAccelZ);
             textViewInfo =(TextView) findViewById(R.id.textViewInfo);
+
+            textViewGPS =(TextView) findViewById(R.id.textViewGPS);
+
             btFilterOnOffX = (Button) findViewById(R.id.btFilterOnOffX);
             btFilterOnOffY = (Button) findViewById(R.id.btFilterOnOffY);
             btStartGameFull = (Button) findViewById(R.id.btStartGameFull);
@@ -1212,27 +1238,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
         //update values in tracker to perform the kalman filter
-        if(sType==TYPE_GYROSCOPE_UNCALIBRATED){
+        //with gyro, accel and mag
+        if(sType==TYPE_GYROSCOPE_UNCALIBRATED){ //sType == TYPE_GYROSCOPE
             //Add data to the tracker performing the kalman filter
             Kalman_processGyro(sensorEvent.values, sensorEvent.timestamp);
         }
-        else if(sType == TYPE_ACCELEROMETER_UNCALIBRATED){
+        else if(sType == TYPE_ACCELEROMETER_UNCALIBRATED) //sType == TYPE_ACCELEROMETER
+        {
             Kalman_processAcc(sensorEvent.values, sensorEvent.timestamp);
-
         }
 
-        // USE OF GYROSCOPE to control position
+        // USE OF GYROSCOPE to control position //use calibrated or not depending on filter selection
         if ((sType == Sensor.TYPE_GYROSCOPE && bFilterEnabledX) || (sType == TYPE_GYROSCOPE_UNCALIBRATED  && !bFilterEnabledX)) {
         //if ((sType == TYPE_GYROSCOPE_UNCALIBRATED)) {
             float[] gyr = new float[3]; float[] v = new float[3]; double theta = 0d;
             copyarrayto(sensorEvent.values, gyr);
-
-            if(bFilterEnabledX){
-                //gyr[0] = (float)KalmanFilteredGyroData.x;
-                //gyr[1] = (float)KalmanFilteredGyroData.y;
-                //gyr[2] = (float)KalmanFilteredGyroData.z;
-            }
             double gyrRotationVelocity = rotatingvel(gyr, v); // obtain rotation velocity and axis
+
             //https://developer.android.com/reference/android/hardware/SensorEvent#values
             //SensorEvent.values[1]; ->
             // evaluate time evolution
@@ -1246,7 +1268,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Yini.update(Yini.rotate((float) -theta, v));
             Zini.update(Zini.rotate((float) -theta, v));
 
-
             if(bFilterEnabledX){
                 //
             }
@@ -1255,7 +1276,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //add simulated drift to left or right
                 //Xini.z += vDriftMeanNoise;
             }
-
 
             //We Just need to use the YAxis info to rotate ghosts
             //show value for debug and validation
@@ -1294,7 +1314,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             textViewGhostX.setTextColor(Color.MAGENTA);
         }
 
-
         //with magnetic and accelerometer sensors
         // USE OF CALCULATED ORIENTATION  to control position
         //simplificando un poco el código
@@ -1304,7 +1323,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //    ...
         //    case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
         //    ...
-
 
         //if ( (sType == Sensor.TYPE_ACCELEROMETER && bFilterEnabledY) || (sType == TYPE_ACCELEROMETER_UNCALIBRATED  && !bFilterEnabledY)) {
         if (sType == TYPE_ACCELEROMETER_UNCALIBRATED) {
@@ -1326,6 +1344,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         else if(sType == Sensor.TYPE_MAGNETIC_FIELD){
             mGeomagnetic = sensorEvent.values.clone();
+            Kalman_processMag(mGeomagnetic, sensorEvent.timestamp);
         }
 
         //RECALCULAR posiciones de referencia del movil
@@ -1340,17 +1359,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 pitch = orientation[1]; // orientation contains: azimut, pitch and roll
                 roll = orientation[2]; // orientation contains: azimut, pitch and roll
             }
+
             //Now Just use the PITCH to calculate ghost position ABOVE Player ?
             GhostDegreeAbovePlayer = pitch;
-            String a = format("%.2f", (azimut/1f));
-            String p = format("%.2f", (pitch/1f));
-            String r = format("%.2f", (roll/1f));
+            String a = format("%.2f", (azimut / 1f));
+            String p = format("%.2f", (pitch / 1f));
+            String r = format("%.2f", (roll / 1f));
             //NO, JUST USE GRAVITY OVER Z AXIS - PITCH SOLO VA BIEN CON MOVIL EN PLANO
             //[filtro paso bajo aplicado]
             GhostDegreeAbovePlayer = mGravity[2];
-            a = format("%.2f", (mGravity[0]/1f));
-            p = format("%.2f", (mGravity[1]/1f));
-            r = format("%.2f", (mGravity[2]/1f));
+            a = format("%.2f", (mGravity[0] / 1f));
+            p = format("%.2f", (mGravity[1] / 1f));
+            r = format("%.2f", (mGravity[2] / 1f));
             textViewAzimut.setText("º: " + a);//
             textViewPitch.setText("º: " + p);//
             textViewRoll.setText("º: " + r);//
@@ -1359,8 +1379,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //para el juego es completamente innecesario
             GhostDegreeAbovePlayer = GhostDegreeAbovePlayer * 90.0f / 9.8f;
             int degreesGhostY = (int) GhostDegreeAbovePlayer;
-            textViewGhostY.setText("" + -degreesGhostY + "º" );
-            textViewGhostY.setTextColor(Color.MAGENTA);
+
+            if (sType == Sensor.TYPE_MAGNETIC_FIELD){
+                float fval = -mGravity[2] * 90.0f / 9.8f;
+                counterforminmax += 1;
+                if (yvalmin > fval) yvalmin =fval;
+                if (yvalmax < fval) yvalmax =fval;
+                if (counterforminmax > 400) {
+                    counterforminmax = 0;
+                    yvalmin = fval;
+                    yvalmax = fval;
+                }
+
+                String tyValMin = format("%.2f", (yvalmin));
+                String tyValMax = format("%.2f", (yvalmax));
+                textViewGPS.setText("" + tyValMin + "_" + tyValMax);
+
+                String dg = format("%.2f", (fval));
+                textViewGhostY.setText("" + dg + "º");//textViewGhostY.setText("" + -degreesGhostY + "º" );
+                textViewGhostY.setTextColor(Color.MAGENTA);
+            }
             //
 
             //Show Kalman filtered data of Gyroscope
@@ -1458,6 +1496,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mTmpRotatedEvent[1] = accValues[0];
         mTmpRotatedEvent[2] = accValues[2];
         mTracker.processAcc(mTmpRotatedEvent, sensorTimeStamp);
+    }
+
+    public void Kalman_processMag(float[] magValues, long sensorTimeStamp)
+    {
+        long timeNanos = System.nanoTime();
+        mTmpRotatedEvent[0] = (-magValues[1]);
+        mTmpRotatedEvent[1] = magValues[0];
+        mTmpRotatedEvent[2] = magValues[2];
+        mTracker.processMag (mTmpRotatedEvent, sensorTimeStamp);
     }
 
     //private final float[] mTmpHeadView = new float[16];
